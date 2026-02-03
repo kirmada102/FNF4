@@ -167,6 +167,25 @@ Tree.prototype.draw = function () {
     ctx.stroke();
   }
 
+   /* ===== FALLING LEAVES ===== */
+  this.leaves.forEach(l => {
+    ctx.save();
+    ctx.translate(l.x - cameraX, l.y);
+    ctx.rotate(l.rot);
+    ctx.fillStyle = `rgba(40,160,80,${l.alpha})`;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, l.size, l.size * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+};
+
+/* ---------- TREE INSTANCES ---------- */
+const trees = [];
+for (let i = 0; i < 32; i++) {
+  trees.push(new Tree(250 + i * 220));
+}
+
   /* ===== CANOPY (LAYERED LEAVES) ===== */
   ctx.fillStyle = this.leafColorShadow;
   ctx.beginPath();
@@ -301,24 +320,6 @@ const cats = [
 ];
 
 
-  /* ===== FALLING LEAVES ===== */
-  this.leaves.forEach(l => {
-    ctx.save();
-    ctx.translate(l.x - cameraX, l.y);
-    ctx.rotate(l.rot);
-    ctx.fillStyle = `rgba(40,160,80,${l.alpha})`;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, l.size, l.size * 0.6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  });
-};
-
-/* ---------- TREE INSTANCES ---------- */
-const trees = [];
-for (let i = 0; i < 32; i++) {
-  trees.push(new Tree(250 + i * 220));
-}
 
 /* ================= HEARTS ================= */
 let hearts = [];
