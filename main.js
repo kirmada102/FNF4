@@ -1482,6 +1482,14 @@ function loop() {
     requestAnimationFrame(loop);
     return;
   }
+
+  if (gameSubmitted) {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    requestAnimationFrame(loop);
+    return;
+  }
+ 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   updateWind();
