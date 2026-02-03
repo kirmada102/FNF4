@@ -42,6 +42,8 @@ let level1CelebrationDone = false;
 let level2CelebrationDone = false;
 let level2QuestionShown = false;
 let finalQuestionShown = false;
+let gameStarted = false;
+
 let levelTimerFrames = 0;
 
 function getLevelTarget() {
@@ -1091,6 +1093,95 @@ function drawFinalCelebration() {
     }
   }
 }
+/* =============================================================================
+   Intro letter 
+============================================================================= */
+function showIntroLetter() {
+  gamePaused = true;
+  overlay.style.display = "flex";
+
+  // make overlay content look like a parchment scroll
+  overlayContent.className = "vintage";
+  overlayContent.style.background = "transparent";
+  overlayContent.style.boxShadow = "none";
+  overlayContent.style.padding = "0";
+
+  overlayContent.innerHTML = `
+    <div style="
+      position: relative;
+      background: #f8e1c2;
+      border: 6px solid #c19055;
+      border-radius: 10px;
+      padding: 28px 28px 38px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.5);
+      font-family: 'Courier New', 'Lucida Console', monospace;
+      color: #3b2f2f;
+    ">
+      <div style="
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        bottom: -16px;
+        height: 14px;
+        background: #e6c49a;
+        border: 4px solid #c19055;
+        border-top: none;
+        border-radius: 0 0 10px 10px;
+      "></div>
+
+      <h2 style="margin-top:0;">Love Quest — Letter</h2>
+
+      <p>This game is consist of 3 level. If you clear all of them and collect all the hearts you will recieve a big gift at the end.</p>
+
+      <p><strong>Rules -</strong><br>
+      Collect all the hearts.<br>
+      Love me forever and ever and ever.</p>
+
+      <p>You are advised to agree the follow:</p>
+
+      <label style="display:block;margin:8px 0;">
+        <input type="checkbox" class="intro-check"> i love the developer by all my heart.
+      </label>
+      <label style="display:block;margin:8px 0;">
+        <input type="checkbox" class="intro-check"> I will play this game with all the love i have for him.
+      </label>
+      <label style="display:block;margin:8px 0;">
+        <input type="checkbox" class="intro-check"> He is a bit stupid though (cause he is not with me)
+      </label>
+
+      <div id="introMsg" style="margin-top:12px;font-size:14px;min-height:18px;"></div>
+
+      <button id="introAccept" style="
+        margin-top:12px;width:100%;padding:12px;font-weight:bold;
+        background:#ff3b7a;color:#fff;border:none;border-radius:8px;cursor:pointer;
+      ">Next</button>
+
+      <button id="introReject" style="
+        margin-top:8px;width:100%;padding:10px;font-weight:bold;
+        background:#333;color:#fff;border:none;border-radius:8px;cursor:pointer;
+      ">Reject</button>
+    </div>
+  `;
+
+  const checks = Array.from(document.querySelectorAll(".intro-check"));
+  const msg = document.getElementById("introMsg");
+
+  document.getElementById("introAccept").onclick = () => {
+    const allChecked = checks.every(c => c.checked);
+    if (!allChecked) {
+      msg.textContent = "Please tick all the boxes to continue.";
+      return;
+    }
+
+    overlay.style.display = "none";
+    gamePaused = false;
+    gameStarted = true;
+  };
+
+  document.getElementById("introReject").onclick = () => {
+    msg.textContent = "You must accept to play.";
+  };
+}
 
 /* =============================================================================
    QUESTIONS
@@ -1122,6 +1213,10 @@ function showFinalQuestion() {
    MAIN LOOP
 ============================================================================= */
 function loop() {
+  if (!gameStarted) {
+    requestAnimationFrame(loop);
+    return;
+  }
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   updateWind();
@@ -1192,4 +1287,5 @@ function loop() {
    START GAME
 ============================================================================= */
 spawnHearts(10);
+showIntroLetter();
 loop();
