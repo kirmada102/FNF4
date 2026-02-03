@@ -1317,25 +1317,31 @@ function drawFinalCelebration() {
   cats.forEach(c => c.draw());
   girl.draw();
 
-  /* ---- BOY ---- */
-  if (finalCelebration.phase === "boyWalk" || finalCelebration.phase === "rose") {
+  /* ---- BOY (STAYS ON RIGHT) ---- */
+  if (finalCelebration.phase === "boyWalk") {
     boy.update();
-    boy.draw();
   }
+  boy.draw();
 
   /* ---- START LANTERNS AFTER ROSE ---- */
   if (finalCelebration.phase === "rose" && finalCelebration.timer > 120) {
     finalCelebration.phase = "lanterns";
+
     if (!lanternMusicStarted) {
       lanternMusic.play().catch(() => {});
       lanternMusicStarted = true;
+    }
+
+    if (finalTextStart === null) {
+      finalTextStart = finalCelebration.timer;
     }
   }
 
   /* ---- SPAWN LANTERNS ---- */
   if (
     finalCelebration.phase === "lanterns" &&
-    finalCelebration.lanternsSpawned < finalCelebration.maxLanterns
+    finalCelebration.lanternsSpawned < finalCelebration.maxLanterns &&
+    finalCelebration.timer <= FINAL_DURATION
   ) {
     for (let i = 0; i < 3; i++) {
       createLantern();
@@ -1374,15 +1380,61 @@ function drawFinalCelebration() {
 
   ctx.globalAlpha = 1;
 
-  if (finalCelebration.timer > FINAL_DURATION) {
-    finalCelebration.active = false;
-    if (lanternMusicStarted) {
-      lanternMusic.pause();
-      lanternMusic.currentTime = 0;
-      lanternMusicStarted = false;
+  /* ---- TYPEWRITER TEXT (10s AFTER MUSIC) ---- */
+  if (finalTextStart !== null) {
+    const elapsed = finalCelebration.timer - finalTextStart;
+
+    if (elapsed >= FINAL_TEXT_DELAY && finalTextIndex < FINAL_MESSAGE.length) {
+      if (finalCelebration.timer % FINAL_TEXT_SPEED_FRAMES === 0) {
+        finalTextIndex++;
+      }
+    }
+
+    if (elapsed >= FINAL_TEXT_DELAY) {
+      const typed = FINAL_MESSAGE.slice(0, finalTextIndex);
+
+      const panelW = Math.min(920, canvas.width - 80);
+      const panelH = Math.min(320, canvas.height * 0.45);
+      const panelX = (canvas.width - panelW) / 2;
+      const panelY = 30;
+
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      ctx.fillRect(panelX, panelY, panelW, panelH);
+
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#fff";
+      ctx.font = "16px 'Courier New', 'Lucida Console', monospace";
+
+      let y = panelY + 30;
+      const lineHeight = 20;
+      const paragraphs = typed.split("\n");
+
+      paragraphs.forEach(p => {
+        if (p.trim() === "") {
+          y += lineHeight;
+          return;
+        }
+        y = wrapText(ctx, p, panelX + 20, y, panelW - 40, lineHeight) + lineHeight;
+      });
+
+      ctx.restore();
+
+      if (finalTextIndex >= FINAL_MESSAGE.length && !finalChoiceShown) {
+        showFinalChoice();
+      }
     }
   }
+
+  /* ---- STOP MUSIC AFTER 2 MIN ---- */
+  if (finalCelebration.timer > FINAL_DURATION && lanternMusicStarted) {
+    lanternMusic.pause();
+    lanternMusic.currentTime = 0;
+    lanternMusicStarted = false;
+  }
 }
+
 
 
   /* ---- TYPEWRITER TEXT (10s AFTER MUSIC) ---- */
@@ -1440,96 +1492,6 @@ function drawFinalCelebration() {
   }
 }
 
-/* ================= DRAW FINAL SCENE ================= */
-function drawFinalCelebration() {
-  finalCelebration.timer++;
-
-  /* ---- NIGHT SKY GRADIENT ---- */
-  const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  g.addColorStop(0, "#020111");
-  g.addColorStop(0.5, "#050b2e");
-  g.addColorStop(1, "#0b1b3f");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  /* ---- STARS ---- */
-  ctx.fillStyle = "#fff";
-  finalCelebration.stars.forEach(s => {
-    s.tw += 0.02;
-    const twinkle = Math.sin(s.tw) * 0.5 + 0.5;
-    ctx.globalAlpha = 0.4 + twinkle * 0.6;
-    ctx.beginPath();
-    ctx.arc(s.x - cameraX * 0.2, s.y, s.r, 0, Math.PI * 2);
-    ctx.fill();
-  });
-  ctx.globalAlpha = 1;
-
-  /* ---- GROUND ---- */
-  ctx.fillStyle = "#142b14";
-  ctx.fillRect(-cameraX, GROUND_Y, WORLD_WIDTH, GROUND_HEIGHT);
-
-  trees.forEach(t => t.draw());
-  cats.forEach(c => c.draw());
-  girl.draw();
-
-  /* ---- BOY ---- */
-  if (finalCelebration.phase === "boyWalk" || finalCelebration.phase === "rose") {
-    boy.update();
-    boy.draw();
-  }
-
-  /* ---- START LANTERNS AFTER ROSE ---- */
-  if (finalCelebration.phase === "rose" && finalCelebration.timer > 120) {
-  finalCelebration.phase = "lanterns";
-  if (!lanternMusicStarted) {
-    lanternMusic.play().catch(() => {});
-    lanternMusicStarted = true;
-  }
-}  
-
-  /* ---- SPAWN LANTERNS ---- */
-  if (
-    finalCelebration.phase === "lanterns" &&
-    finalCelebration.lanternsSpawned < finalCelebration.maxLanterns
-  ) {
-    for (let i = 0; i < 3; i++) {
-      createLantern();
-      finalCelebration.lanternsSpawned++;
-      if (finalCelebration.lanternsSpawned >= finalCelebration.maxLanterns) break;
-    }
-  }
-
-  /* ---- DRAW LANTERNS ---- */
-  finalCelebration.lanterns.forEach(l => {
-    l.y -= l.vy * l.depth;
-    l.sway += l.swaySpeed;
-    l.x += Math.sin(l.sway) * 0.2;
-    l.alpha -= 0.0008;
-
-    // glow
-    ctx.globalAlpha = l.alpha * 0.6;
-    ctx.fillStyle = "rgba(255,180,80,0.4)";
-    ctx.beginPath();
-    ctx.arc(l.x - cameraX * l.depth, l.y, l.size * 2.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // lantern body
-    ctx.globalAlpha = l.alpha;
-    ctx.fillStyle = "rgb(255,200,120)";
-    ctx.beginPath();
-    ctx.ellipse(
-      l.x - cameraX * l.depth,
-      l.y,
-      l.size,
-      l.size * 1.3,
-      0,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
-  });
-
-  ctx.globalAlpha = 1;
 
   /* ---- END AFTER ~20s ---- */
     if (finalCelebration.timer > FINAL_DURATION) {
