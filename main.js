@@ -341,6 +341,129 @@ for (let i = 0; i < 30; i++) trees.push(new Tree(300 + i * 220));
 
 
 /* =============================================================================
+   CLOUDS + BIRDS (LEVELS 1–2 ONLY)
+============================================================================= */
+
+function Cloud(x, y, speed, scale) {
+  this.x = x;
+  this.y = y;
+  this.speed = speed;
+  this.scale = scale;
+  this.wobble = Math.random() * Math.PI * 2;
+}
+
+Cloud.prototype.update = function () {
+  this.x += this.speed + wind * 0.05;
+  this.wobble += 0.01;
+
+  if (this.x - 200 > WORLD_WIDTH) {
+    this.x = -200;
+    this.y = 60 + Math.random() * 180;
+    this.speed = 0.2 + Math.random() * 0.4;
+    this.scale = 0.8 + Math.random() * 0.6;
+  }
+};
+
+Cloud.prototype.draw = function () {
+  const x = this.x - cameraX * 0.3;
+  const y = this.y + Math.sin(this.wobble) * 2;
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(this.scale, this.scale);
+
+  // pixel cloud style
+  ctx.fillStyle = "#e8f2f2";
+  ctx.fillRect(-32, -10, 64, 20);
+  ctx.fillRect(-40, -6, 16, 12);
+  ctx.fillRect(24, -6, 16, 12);
+  ctx.fillRect(-20, -20, 40, 14);
+  ctx.fillStyle = "#bfe2e2";
+  ctx.fillRect(-30, 6, 60, 8);
+
+  ctx.restore();
+};
+
+const clouds = [];
+const cloudCount = 5 + Math.floor(Math.random() * 3);
+for (let i = 0; i < cloudCount; i++) {
+  clouds.push(
+    new Cloud(
+      Math.random() * WORLD_WIDTH,
+      50 + Math.random() * 200,
+      0.2 + Math.random() * 0.4,
+      0.8 + Math.random() * 0.6
+    )
+  );
+}
+
+/* ----- BIRDS ----- */
+function Bird(x, y, speed) {
+  this.x = x;
+  this.y = y;
+  this.speed = speed;
+  this.flap = Math.random() * Math.PI * 2;
+  this.color = ["#f59b2c", "#d97022", "#f7d170"][Math.floor(Math.random() * 3)];
+}
+
+Bird.prototype.update = function () {
+  this.x += this.speed;
+  this.flap += 0.35;
+
+  if (this.x > WORLD_WIDTH + 200) {
+    this.x = -200;
+    this.y = 120 + Math.random() * 160;
+    this.speed = 0.8 + Math.random() * 1.2;
+  }
+};
+
+Bird.prototype.draw = function () {
+  const x = this.x - cameraX * 0.5;
+  const y = this.y;
+
+  ctx.save();
+  ctx.translate(x, y);
+
+  // body
+  ctx.fillStyle = this.color;
+  ctx.fillRect(-10, -4, 18, 8);
+
+  // head
+  ctx.fillStyle = "#395c5e";
+  ctx.fillRect(-2, -8, 6, 6);
+
+  // beak
+  ctx.fillStyle = "#ff7f2a";
+  ctx.fillRect(4, -6, 6, 3);
+
+  // wings (flap)
+  const wing = Math.sin(this.flap) * 5;
+  ctx.strokeStyle = "#2b3d3f";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-6, -2);
+  ctx.lineTo(-14, -8 + wing);
+  ctx.moveTo(-6, 2);
+  ctx.lineTo(-14, 8 - wing);
+  ctx.stroke();
+
+  ctx.restore();
+};
+
+const birds = [];
+for (let i = 0; i < 4; i++) {
+  birds.push(
+    new Bird(
+      Math.random() * WORLD_WIDTH,
+      120 + Math.random() * 160,
+      0.8 + Math.random() * 1.2
+    )
+  );
+}
+
+
+
+/* =============================================================================
    CATS — MOODS + WAVY TAILS
 ============================================================================= */
 function Cat(x) {
@@ -1518,6 +1641,10 @@ function loop() {
   ctx.fillRect(-cameraX, GROUND_Y, WORLD_WIDTH, GROUND_HEIGHT);
 
   drawWind();
+  if (level <= 2) {
+   clouds.forEach(c => { c.update(); c.draw(); });
+   birds.forEach(b => { b.update(); b.draw(); });
+  }
 
   trees.forEach(t => { t.update(); t.draw(); });
   cats.forEach(c => { c.update(); c.draw(); });
