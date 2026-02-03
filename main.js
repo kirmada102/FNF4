@@ -1167,16 +1167,24 @@ function showIntroLetter() {
   const msg = document.getElementById("introMsg");
 
   document.getElementById("introAccept").onclick = () => {
-    const allChecked = checks.every(c => c.checked);
-    if (!allChecked) {
-      msg.textContent = "Please tick all the boxes to continue.";
-      return;
-    }
+  const allChecked = checks.every(c => c.checked);
+  if (!allChecked) {
+    msg.textContent = "Please tick all the boxes to continue.";
+    return;
+  }
 
-    overlay.style.display = "none";
-    gamePaused = false;
-    gameStarted = true;
-  };
+  // reset overlay styles so other popups look normal
+  overlayContent.className = "";
+  overlayContent.style.background = "";
+  overlayContent.style.boxShadow = "";
+  overlayContent.style.padding = "";
+  overlayContent.style.position = "";
+
+  overlay.style.display = "none";
+  gamePaused = false;
+  gameStarted = true;
+};
+
 
   document.getElementById("introReject").onclick = () => {
     msg.textContent = "You must accept to play.";
