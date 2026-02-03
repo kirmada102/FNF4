@@ -274,35 +274,192 @@ function drawCelebration() {
 }
 
 /* =============================================================================
-   FINAL CELEBRATION (NIGHT)
+   FINAL CELEBRATION — CINEMATIC NIGHT + LANTERNS
 ============================================================================= */
-let finalCelebration = { active: false, stars: [] };
 
+const FINAL_DURATION = 20 * 60; // ~20 seconds at 60fps
+
+let finalCelebration = {
+  active: false,
+  timer: 0,
+  stars: [],
+  lanterns: [],
+  lanternsSpawned: 0,
+  maxLanterns: 220,
+  phase: "boyWalk" // boyWalk → rose → lanterns → fade
+};
+
+/* ================= BOY CHARACTER ================= */
 const boy = {
   x: 0,
   y: GROUND_Y,
+  speed: 2,
+  stopped: false,
+
   update() {
-    if (this.x > girl.x + 40) this.x -= 2;
+    if (!this.stopped) {
+      if (this.x > girl.x + 50) {
+        this.x -= this.speed;
+      } else {
+        this.stopped = true;
+        finalCelebration.phase = "rose";
+      }
+    }
   },
+
   draw() {
+    ctx.save();
+    ctx.translate(this.x - cameraX, this.y);
+
+    // hoodie
     ctx.fillStyle = "#222";
-    ctx.fillRect(this.x - cameraX, this.y - 26, 16, 22);
+    ctx.fillRect(-8, -26, 16, 22);
+
+    // head
+    ctx.fillStyle = "#ffddb3";
+    ctx.fillRect(-7, -42, 14, 14);
+
+    // rose
     ctx.fillStyle = "red";
     ctx.beginPath();
-    ctx.arc(this.x - cameraX + 14, this.y - 22, 4, 0, Math.PI * 2);
+    ctx.arc(14, -22, 4, 0, Math.PI * 2);
     ctx.fill();
+
+    ctx.restore();
   }
 };
 
+/* ================= START FINAL CELEBRATION ================= */
 function startFinalCelebration() {
   overlay.style.display = "none";
+  gamePaused = true;
+
   finalCelebration.active = true;
-  boy.x = girl.x + 400;
-  finalCelebration.stars = Array.from({ length: 120 }, () => ({
+  finalCelebration.timer = 0;
+  finalCelebration.phase = "boyWalk";
+  finalCelebration.lanterns = [];
+  finalCelebration.lanternsSpawned = 0;
+
+  boy.x = girl.x + 450;
+  boy.stopped = false;
+
+  // stars
+  finalCelebration.stars = Array.from({ length: 180 }, () => ({
     x: Math.random() * WORLD_WIDTH,
-    y: Math.random() * canvas.height * 0.6
+    y: Math.random() * canvas.height * 0.6,
+    r: Math.random() * 1.8 + 0.2,
+    tw: Math.random() * Math.PI * 2
   }));
 }
+
+/* ================= FIRE LANTERN ================= */
+function createLantern() {
+  finalCelebration.lanterns.push({
+    x: girl.x - 500 + Math.random() * 1000,
+    y: GROUND_Y + 20 + Math.random() * 40,
+    vy: 0.4 + Math.random() * 0.6,
+    sway: Math.random() * Math.PI * 2,
+    swaySpeed: 0.01 + Math.random() * 0.02,
+    size: 6 + Math.random() * 6,
+    glow: 0.6 + Math.random() * 0.4,
+    alpha: 1,
+    depth: 0.6 + Math.random() * 0.6 // parallax
+  });
+}
+
+/* ================= DRAW FINAL SCENE ================= */
+function drawFinalCelebration() {
+  finalCelebration.timer++;
+
+  /* ---- NIGHT SKY GRADIENT ---- */
+  const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  g.addColorStop(0, "#020111");
+  g.addColorStop(0.5, "#050b2e");
+  g.addColorStop(1, "#0b1b3f");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  /* ---- STARS ---- */
+  ctx.fillStyle = "#fff";
+  finalCelebration.stars.forEach(s => {
+    s.tw += 0.02;
+    const twinkle = Math.sin(s.tw) * 0.5 + 0.5;
+    ctx.globalAlpha = 0.4 + twinkle * 0.6;
+    ctx.beginPath();
+    ctx.arc(s.x - cameraX * 0.2, s.y, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  /* ---- GROUND ---- */
+  ctx.fillStyle = "#142b14";
+  ctx.fillRect(-cameraX, GROUND_Y, WORLD_WIDTH, GROUND_HEIGHT);
+
+  trees.forEach(t => t.draw());
+  cats.forEach(c => c.draw());
+  girl.draw();
+
+  /* ---- BOY ---- */
+  if (finalCelebration.phase === "boyWalk" || finalCelebration.phase === "rose") {
+    boy.update();
+    boy.draw();
+  }
+
+  /* ---- START LANTERNS AFTER ROSE ---- */
+  if (finalCelebration.phase === "rose" && finalCelebration.timer > 120) {
+    finalCelebration.phase = "lanterns";
+  }
+
+  /* ---- SPAWN LANTERNS ---- */
+  if (
+    finalCelebration.phase === "lanterns" &&
+    finalCelebration.lanternsSpawned < finalCelebration.maxLanterns
+  ) {
+    for (let i = 0; i < 3; i++) {
+      createLantern();
+      finalCelebration.lanternsSpawned++;
+      if (finalCelebration.lanternsSpawned >= finalCelebration.maxLanterns) break;
+    }
+  }
+
+  /* ---- DRAW LANTERNS ---- */
+  finalCelebration.lanterns.forEach(l => {
+    l.y -= l.vy * l.depth;
+    l.sway += l.swaySpeed;
+    l.x += Math.sin(l.sway) * 0.2;
+    l.alpha -= 0.0008;
+
+    // glow
+    ctx.globalAlpha = l.alpha * 0.6;
+    ctx.fillStyle = "rgba(255,180,80,0.4)";
+    ctx.beginPath();
+    ctx.arc(l.x - cameraX * l.depth, l.y, l.size * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // lantern body
+    ctx.globalAlpha = l.alpha;
+    ctx.fillStyle = "rgb(255,200,120)";
+    ctx.beginPath();
+    ctx.ellipse(
+      l.x - cameraX * l.depth,
+      l.y,
+      l.size,
+      l.size * 1.3,
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  });
+
+  ctx.globalAlpha = 1;
+
+  /* ---- END AFTER ~20s ---- */
+  if (finalCelebration.timer > FINAL_DURATION) {
+    finalCelebration.active = false;
+  }
+}
+
 
 /* =============================================================================
    QUESTIONS
@@ -344,11 +501,11 @@ function loop() {
     return;
   }
 
-  if (celebrationActive) {
-    drawCelebration();
-    requestAnimationFrame(loop);
-    return;
-  }
+ if (finalCelebration.active) {
+  drawFinalCelebration();
+  requestAnimationFrame(loop);
+  return;
+}
 
   ctx.fillStyle = "#4caf50";
   ctx.fillRect(-cameraX, GROUND_Y, WORLD_WIDTH, GROUND_HEIGHT);
