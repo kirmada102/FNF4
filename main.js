@@ -929,12 +929,13 @@ function drawFinalCelebration() {
   ctx.globalAlpha = 1;
 
   /* ---- END AFTER ~20s ---- */
-  if (finalCelebration.timer > FINAL_DURATION) {
-  finalCelebration.active = false;
-  if (lanternMusicStarted) {
-    lanternMusic.pause();
-    lanternMusic.currentTime = 0;
-    lanternMusicStarted = false;
+    if (finalCelebration.timer > FINAL_DURATION) {
+    finalCelebration.active = false;
+    if (lanternMusicStarted) {
+      lanternMusic.pause();
+      lanternMusic.currentTime = 0;
+      lanternMusicStarted = false;
+    }
   }
 }
 
@@ -997,9 +998,17 @@ function loop() {
   girl.update();
   girl.draw();
 
-  hearts.forEach((h, i) => {
+    hearts.forEach((h, i) => {
     drawHeart(h);
-    if (Math.abs(h.x - girl.x) < 30) {
+
+    // match the floating heart position used in drawHeart
+    const heartY = h.baseY + Math.sin(h.floatT) * 10;
+
+    const dx = Math.abs(h.x - girl.x);
+    const dy = Math.abs(heartY - girl.y);
+
+    // only collect if touching (both X and Y) AND girl is not on ground
+    if (dx < 25 && dy < 35 && !girl.onGround) {
       hearts.splice(i, 1);
       heartsCollected++;
     }
