@@ -592,7 +592,7 @@ function loop() {
   girl.draw();
 
   hearts.forEach((h, i) => {
-    drawHeart(h.x, h.y);
+    drawHeart(h);
     if (Math.abs(h.x - girl.x) < 30) {
       hearts.splice(i, 1);
       heartsCollected++;
