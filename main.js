@@ -342,11 +342,17 @@ function drawCelebration() {
   ctx.fillText(celebrationText, canvas.width / 2, canvas.height / 2);
   celebrationTimer--;
   if (celebrationTimer <= 0) {
-    celebrationActive = false;
-    gamePaused = false;
-    celebrationCallback && celebrationCallback();
-  }
+  celebrationActive = false;
+  gamePaused = false;
+
+  // 🔧 RESET PLAYER PHYSICS (IMPORTANT)
+  girl.vy = 0;
+  girl.y = GROUND_Y;
+  girl.onGround = true;
+
+  celebrationCallback && celebrationCallback();
 }
+
 
 /* =============================================================================
    FINAL CELEBRATION — CINEMATIC NIGHT + LANTERNS
@@ -560,21 +566,6 @@ function showFinalQuestion() {
 ============================================================================= */
 function loop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  if (finalCelebration.active) {
-    ctx.fillStyle = "#050b2e";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#fff";
-    finalCelebration.stars.forEach(s => ctx.fillRect(s.x - cameraX, s.y, 2, 2));
-    ctx.fillStyle = "#1b3b1b";
-    ctx.fillRect(-cameraX, GROUND_Y, WORLD_WIDTH, GROUND_HEIGHT);
-    trees.forEach(t => t.draw());
-    girl.draw();
-    boy.update();
-    boy.draw();
-    requestAnimationFrame(loop);
-    return;
-  }
 
  if (finalCelebration.active) {
   drawFinalCelebration();
