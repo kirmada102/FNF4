@@ -182,6 +182,125 @@ Tree.prototype.draw = function () {
 
   ctx.restore();
 
+ /* ================= CATS ================= */
+
+ /* =============================================================================
+   REALISTIC CATS — MOODS, WAVY TAILS, COLORS
+============================================================================= */
+
+function Cat(x) {
+  this.x = x;
+  this.y = GROUND_Y;
+
+  // animation
+  this.anim = Math.random() * Math.PI * 2;
+  this.tailAnim = Math.random() * Math.PI * 2;
+
+  // personality
+  const moods = ["playful", "lazy", "sleepy"];
+  this.mood = moods[Math.floor(Math.random() * moods.length)];
+
+  // movement speed based on mood
+  this.followSpeed =
+    this.mood === "playful" ? 0.018 :
+    this.mood === "lazy" ? 0.008 : 0.004;
+
+  // appearance
+  const colors = ["#f2c89b", "#d1a679", "#999999", "#222222", "#f5f5f5"];
+  this.color = colors[Math.floor(Math.random() * colors.length)];
+
+  this.hasStripes = Math.random() > 0.5;
+  this.eyeOpen = this.mood !== "sleepy";
+}
+
+Cat.prototype.update = function () {
+  // follow girl softly
+  this.x += (girl.x - this.x) * this.followSpeed;
+
+  this.anim += 0.12;
+  this.tailAnim += 0.2;
+};
+
+Cat.prototype.draw = function () {
+  ctx.save();
+  ctx.translate(this.x - cameraX, this.y);
+
+  const bounce =
+    this.mood === "playful" ? Math.sin(this.anim) * 4 :
+    this.mood === "lazy" ? Math.sin(this.anim) * 1.5 : 0;
+
+  ctx.translate(0, bounce);
+
+  /* ---- BODY ---- */
+  ctx.fillStyle = this.color;
+  ctx.fillRect(-14, -16, 28, 12); // body
+
+  /* ---- STRIPES ---- */
+  if (this.hasStripes) {
+    ctx.fillStyle = "rgba(0,0,0,0.15)";
+    ctx.fillRect(-10, -15, 3, 10);
+    ctx.fillRect(-2, -15, 3, 10);
+    ctx.fillRect(6, -15, 3, 10);
+  }
+
+  /* ---- HEAD ---- */
+  ctx.fillStyle = this.color;
+  ctx.fillRect(-9, -30, 18, 14);
+
+  /* ---- EARS ---- */
+  ctx.fillRect(-9, -36, 5, 6);
+  ctx.fillRect(4, -36, 5, 6);
+
+  /* ---- EYES ---- */
+  ctx.fillStyle = "#000";
+  if (this.eyeOpen) {
+    ctx.fillRect(-4, -24, 2, 2);
+    ctx.fillRect(2, -24, 2, 2);
+  } else {
+    ctx.fillRect(-4, -23, 4, 1); // sleepy eyes
+  }
+
+  /* ---- LEGS ---- */
+  ctx.fillStyle = this.color;
+  ctx.fillRect(-10, -4 + Math.sin(this.anim) * 2, 4, 6);
+  ctx.fillRect(-2, -4 - Math.sin(this.anim) * 2, 4, 6);
+  ctx.fillRect(6, -4 + Math.sin(this.anim) * 2, 4, 6);
+
+  /* ---- WAVY TAIL ---- */
+  ctx.strokeStyle = this.color;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+
+  let tailX = 14;
+  let tailY = -12;
+
+  ctx.moveTo(tailX, tailY);
+
+  for (let i = 0; i < 5; i++) {
+    const wave =
+      Math.sin(this.tailAnim + i * 0.8) *
+      (this.mood === "playful" ? 6 : this.mood === "lazy" ? 3 : 1);
+
+    ctx.lineTo(
+      tailX + i * 6,
+      tailY + wave
+    );
+  }
+
+  ctx.stroke();
+
+  ctx.restore();
+};
+
+/* ---- CREATE MULTIPLE CATS ---- */
+const cats = [
+  new Cat(600),
+  new Cat(900),
+  new Cat(1200),
+  new Cat(1500)
+];
+
+
   /* ===== FALLING LEAVES ===== */
   this.leaves.forEach(l => {
     ctx.save();
