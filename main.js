@@ -14,6 +14,14 @@ canvas.height = window.innerHeight;
 const overlay = document.getElementById("overlay");
 const overlayContent = document.getElementById("overlayContent");
 
+
+// Lantern music
+const lanternMusic = new Audio("lanterns.mp3");
+lanternMusic.loop = true;
+lanternMusic.volume = 0.6;
+let lanternMusicStarted = false;
+
+
 /* =============================================================================
    WORLD CONSTANTS
 ============================================================================= */
@@ -869,8 +877,12 @@ function drawFinalCelebration() {
 
   /* ---- START LANTERNS AFTER ROSE ---- */
   if (finalCelebration.phase === "rose" && finalCelebration.timer > 120) {
-    finalCelebration.phase = "lanterns";
+  finalCelebration.phase = "lanterns";
+  if (!lanternMusicStarted) {
+    lanternMusic.play().catch(() => {});
+    lanternMusicStarted = true;
   }
+}  
 
   /* ---- SPAWN LANTERNS ---- */
   if (
@@ -918,7 +930,11 @@ function drawFinalCelebration() {
 
   /* ---- END AFTER ~20s ---- */
   if (finalCelebration.timer > FINAL_DURATION) {
-    finalCelebration.active = false;
+  finalCelebration.active = false;
+  if (lanternMusicStarted) {
+    lanternMusic.pause();
+    lanternMusic.currentTime = 0;
+    lanternMusicStarted = false;
   }
 }
 
@@ -926,7 +942,14 @@ function drawFinalCelebration() {
    QUESTIONS
 ============================================================================= */
 function evasiveYes(cb) {
-  document.getElementById("yes").onclick = cb;
+  document.getElementById("yes").onclick = () => {
+    // unlock audio for later playback
+    lanternMusic.play().then(() => {
+      lanternMusic.pause();
+      lanternMusic.currentTime = 0;
+    }).catch(() => {});
+    cb();
+  };
 }
 
 function showFinalQuestion() {
