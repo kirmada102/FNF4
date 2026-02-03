@@ -82,30 +82,124 @@ const girl = {
 };
 
 /* ================= TREES ================= */
+/* =============================================================================
+   ADVANCED WAVY TREES WITH FALLING LEAVES
+============================================================================= */
+
 function Tree(x) {
   this.x = x;
-  this.height = 90;
+  this.baseHeight = 80 + Math.random() * 60;
+  this.width = 16 + Math.random() * 6;
+
+  // wind / sway
+  this.sway = Math.random() * Math.PI * 2;
+  this.swaySpeed = 0.004 + Math.random() * 0.006;
+  this.swayAmount = 2 + Math.random() * 4;
+
+  // canopy
+  this.leafRadius = 40 + Math.random() * 25;
+  this.leafColorMain = Math.random() > 0.5 ? "#1f8f3a" : "#2aa84a";
+  this.leafColorShadow = "#145c2a";
+
+  // falling leaves
+  this.leaves = [];
+  this.spawnTimer = Math.random() * 200;
 }
+
+/* ---------- TREE UPDATE ---------- */
+Tree.prototype.update = function () {
+  this.sway += this.swaySpeed;
+
+  // spawn falling leaves
+  this.spawnTimer++;
+  if (this.spawnTimer > 40) {
+    this.spawnTimer = 0;
+    if (Math.random() < 0.6) {
+      this.leaves.push({
+        x: this.x + (Math.random() * 40 - 20),
+        y: GROUND_Y - this.baseHeight - Math.random() * 40,
+        vy: 0.5 + Math.random(),
+        vx: Math.random() * 0.6 - 0.3,
+        rot: Math.random() * Math.PI,
+        rotSpeed: Math.random() * 0.1 - 0.05,
+        size: 4 + Math.random() * 3,
+        alpha: 0.8
+      });
+    }
+  }
+
+  // update leaves
+  this.leaves.forEach(l => {
+    l.vy += 0.01;
+    l.y += l.vy;
+    l.x += l.vx + Math.sin(this.sway) * 0.2;
+    l.rot += l.rotSpeed;
+    l.alpha -= 0.002;
+  });
+
+  // cleanup
+  this.leaves = this.leaves.filter(l => l.y < GROUND_Y && l.alpha > 0);
+};
+
+/* ---------- TREE DRAW ---------- */
 Tree.prototype.draw = function () {
+  const swayOffset = Math.sin(this.sway) * this.swayAmount;
+
+  ctx.save();
+  ctx.translate(this.x - cameraX + swayOffset, GROUND_Y);
+
+  /* ===== TRUNK ===== */
   ctx.fillStyle = "#5b3a1e";
-  ctx.fillRect(this.x - cameraX, GROUND_Y - this.height, 18, this.height);
+  ctx.fillRect(
+    -this.width / 2,
+    -this.baseHeight,
+    this.width,
+    this.baseHeight
+  );
+
+  /* wood grain */
+  ctx.strokeStyle = "rgba(0,0,0,0.15)";
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(-this.width / 2 + Math.random() * this.width, -this.baseHeight);
+    ctx.lineTo(-this.width / 2 + Math.random() * this.width, 0);
+    ctx.stroke();
+  }
+
+  /* ===== CANOPY (LAYERED LEAVES) ===== */
+  ctx.fillStyle = this.leafColorShadow;
+  ctx.beginPath();
+  ctx.arc(0, -this.baseHeight + 6, this.leafRadius * 1.05, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = this.leafColorMain;
+  ctx.beginPath();
+  ctx.arc(-18, -this.baseHeight - 6, this.leafRadius * 0.8, 0, Math.PI * 2);
+  ctx.arc(18, -this.baseHeight - 6, this.leafRadius * 0.8, 0, Math.PI * 2);
+  ctx.arc(0, -this.baseHeight - 20, this.leafRadius, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+
+  /* ===== FALLING LEAVES ===== */
+  this.leaves.forEach(l => {
+    ctx.save();
+    ctx.translate(l.x - cameraX, l.y);
+    ctx.rotate(l.rot);
+    ctx.fillStyle = `rgba(40,160,80,${l.alpha})`;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, l.size, l.size * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
 };
 
+/* ---------- TREE INSTANCES ---------- */
 const trees = [];
-for (let i = 0; i < 30; i++) trees.push(new Tree(300 + i * 200));
-
-/* ================= CATS ================= */
-function Cat(x) {
-  this.x = x;
+for (let i = 0; i < 32; i++) {
+  trees.push(new Tree(250 + i * 220));
 }
-Cat.prototype.update = function () {
-  this.x += (girl.x - this.x) * 0.01;
-};
-Cat.prototype.draw = function () {
-  ctx.fillStyle = "#f2c89b";
-  ctx.fillRect(this.x - cameraX, GROUND_Y - 14, 20, 10);
-};
-const cats = [new Cat(600), new Cat(900)];
 
 /* ================= HEARTS ================= */
 let hearts = [];
