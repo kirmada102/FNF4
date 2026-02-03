@@ -78,13 +78,78 @@ function drawHUD() {
   ctx.restore();
 }
 
-
 /* =============================================================================
    INPUT
 ============================================================================= */
 const keys = {};
 document.addEventListener("keydown", e => keys[e.key] = true);
 document.addEventListener("keyup", e => keys[e.key] = false);
+
+function setupTouchControls() {
+  if (!("ontouchstart" in window || navigator.maxTouchPoints > 0)) return;
+
+  const pad = document.createElement("div");
+  pad.style.position = "fixed";
+  pad.style.left = "0";
+  pad.style.right = "0";
+  pad.style.bottom = "0";
+  pad.style.height = "140px";
+  pad.style.pointerEvents = "none";
+  pad.style.zIndex = "9";
+
+  const makeBtn = (label, x, y) => {
+    const btn = document.createElement("div");
+    btn.textContent = label;
+    btn.style.position = "absolute";
+    btn.style.left = x;
+    btn.style.bottom = y;
+    btn.style.width = "90px";
+    btn.style.height = "90px";
+    btn.style.background = "rgba(0,0,0,0.45)";
+    btn.style.color = "#fff";
+    btn.style.display = "flex";
+    btn.style.alignItems = "center";
+    btn.style.justifyContent = "center";
+    btn.style.borderRadius = "50%";
+    btn.style.fontSize = "18px";
+    btn.style.fontWeight = "bold";
+    btn.style.userSelect = "none";
+    btn.style.pointerEvents = "auto";
+    btn.style.touchAction = "none";
+    return btn;
+  };
+
+  const leftBtn = makeBtn("◀", "20px", "20px");
+  const rightBtn = makeBtn("▶", "120px", "20px");
+  const jumpBtn = makeBtn("JUMP", "calc(100% - 120px)", "20px");
+
+  const bind = (btn, key) => {
+    btn.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      keys[key] = true;
+    });
+    btn.addEventListener("pointerup", e => {
+      e.preventDefault();
+      keys[key] = false;
+    });
+    btn.addEventListener("pointercancel", () => keys[key] = false);
+    btn.addEventListener("pointerleave", () => keys[key] = false);
+  };
+
+  bind(leftBtn, "ArrowLeft");
+  bind(rightBtn, "ArrowRight");
+  bind(jumpBtn, " ");
+
+  pad.appendChild(leftBtn);
+  pad.appendChild(rightBtn);
+  pad.appendChild(jumpBtn);
+  document.body.appendChild(pad);
+
+  document.body.style.touchAction = "none";
+}
+
+setupTouchControls();
+
 
 /* =============================================================================
    PLAYER — GIRL
