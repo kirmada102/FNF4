@@ -852,7 +852,12 @@ function showLevel2Question() {
    FINAL CELEBRATION — CINEMATIC NIGHT + LANTERNS
 ============================================================================= */
 
-const FINAL_DURATION = 120 * 60; // ~120 seconds at 60fps
+const FINAL_DURATION = 120 * 60; // 2 minutes at 60fps
+const FINAL_TEXT_DELAY = 10 * 60; // 10 seconds after music starts
+const FINAL_TEXT_SPEED_FRAMES = 3; // typewriter speed (1 char every 3 frames)
+
+const FINAL_MESSAGE =
+  "2 years with you my love and I think the reason every moment of our journey has been sp beautiful is because you were a part of every scenery I wish to live the whole eternity with you and you and you till the galaxies collide the world collapse and everything comes to dust. Happy valentines day my love. I hope you love my small gift i have working on months for.\n\nI love you Tanu. I always will.\n\n- yours geet.";
 
 let finalCelebration = {
   active: false,
@@ -861,8 +866,13 @@ let finalCelebration = {
   lanterns: [],
   lanternsSpawned: 0,
   maxLanterns: 220,
-  phase: "boyWalk" // boyWalk → rose → lanterns → fade
+  phase: "boyWalk" // boyWalk → rose → lanterns
 };
+
+let finalTextStart = null;
+let finalTextIndex = 0;
+let finalChoiceShown = false;
+let gameSubmitted = false;
 
 /* ================= BOY CHARACTER ================= */
 const boy = {
@@ -965,6 +975,14 @@ function startFinalCelebration() {
   finalCelebration.lanterns = [];
   finalCelebration.lanternsSpawned = 0;
 
+  finalTextStart = null;
+  finalTextIndex = 0;
+  finalChoiceShown = false;
+
+  lanternMusic.pause();
+  lanternMusic.currentTime = 0;
+  lanternMusicStarted = false;
+
   boy.x = girl.x + 450;
   boy.stopped = false;
 
@@ -990,6 +1008,245 @@ function createLantern() {
     alpha: 1,
     depth: 0.6 + Math.random() * 0.6 // parallax
   });
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(" ");
+  let line = "";
+
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + " ";
+    const metrics = ctx.measureText(testLine);
+
+    if (metrics.width > maxWidth && n > 0) {
+      ctx.fillText(line, x, y);
+      line = words[n] + " ";
+      y += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+
+  ctx.fillText(line, x, y);
+  return y;
+}
+
+function showFinalChoice() {
+  if (finalChoiceShown) return;
+  finalChoiceShown = true;
+
+  overlay.style.display = "flex";
+  overlayContent.className = "vintage";
+  overlayContent.style.fontFamily = "'Courier New', 'Lucida Console', monospace";
+  overlayContent.innerHTML = `
+    <h2>Replay the game?</h2>
+    <button id="replayBtn">Replay</button>
+    <button id="submitBtn">Submit</button>
+  `;
+
+  document.getElementById("replayBtn").onclick = () => {
+    overlay.style.display = "none";
+    resetGame();
+  };
+
+  document.getElementById("submitBtn").onclick = () => {
+    overlay.style.display = "none";
+    gameSubmitted = true;
+  };
+}
+
+function resetGame() {
+  gameSubmitted = false;
+  finalChoiceShown = false;
+  finalTextStart = null;
+  finalTextIndex = 0;
+
+  finalCelebration.active = false;
+  finalCelebration.timer = 0;
+  finalCelebration.phase = "boyWalk";
+  finalCelebration.lanterns = [];
+  finalCelebration.lanternsSpawned = 0;
+
+  lanternMusic.pause();
+  lanternMusic.currentTime = 0;
+  lanternMusicStarted = false;
+
+  level = 1;
+  heartsCollected = 0;
+  level1CelebrationDone = false;
+  level2CelebrationDone = false;
+  level2QuestionShown = false;
+  finalQuestionShown = false;
+  level1QuestionAnswered = false;
+  level2QuestionAnswered = false;
+  noClickCount = 0;
+
+  celebrationActive = false;
+  questionActive = false;
+  gamePaused = false;
+
+  levelTimerFrames = 0;
+  spawnHearts(10);
+
+  girl.x = 150;
+  girl.y = GROUND_Y;
+  girl.vy = 0;
+  girl.onGround = true;
+  cameraX = 0;
+
+  gameStarted = true;
+}
+
+/* ================= DRAW FINAL SCENE ================= */
+function drawFinalCelebration() {
+  finalCelebration.timer++;
+
+  /* ---- NIGHT SKY GRADIENT ---- */
+  const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  g.addColorStop(0, "#020111");
+  g.addColorStop(0.5, "#050b2e");
+  g.addColorStop(1, "#0b1b3f");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  /* ---- STARS ---- */
+  ctx.fillStyle = "#fff";
+  finalCelebration.stars.forEach(s => {
+    s.tw += 0.02;
+    const twinkle = Math.sin(s.tw) * 0.5 + 0.5;
+    ctx.globalAlpha = 0.4 + twinkle * 0.6;
+    ctx.beginPath();
+    ctx.arc(s.x - cameraX * 0.2, s.y, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  /* ---- GROUND ---- */
+  ctx.fillStyle = "#142b14";
+  ctx.fillRect(-cameraX, GROUND_Y, WORLD_WIDTH, GROUND_HEIGHT);
+
+  trees.forEach(t => t.draw());
+  cats.forEach(c => c.draw());
+  girl.draw();
+
+  /* ---- BOY (STAYS ON RIGHT) ---- */
+  if (finalCelebration.phase === "boyWalk") {
+    boy.update();
+  }
+  boy.draw();
+
+  /* ---- START LANTERNS AFTER ROSE ---- */
+  if (finalCelebration.phase === "rose" && finalCelebration.timer > 120) {
+    finalCelebration.phase = "lanterns";
+
+    if (!lanternMusicStarted) {
+      lanternMusic.play().catch(() => {});
+      lanternMusicStarted = true;
+    }
+
+    if (finalTextStart === null) {
+      finalTextStart = finalCelebration.timer;
+    }
+  }
+
+  /* ---- SPAWN LANTERNS (STOP AFTER 2 MIN) ---- */
+  if (
+    finalCelebration.phase === "lanterns" &&
+    finalCelebration.lanternsSpawned < finalCelebration.maxLanterns &&
+    finalCelebration.timer <= FINAL_DURATION
+  ) {
+    for (let i = 0; i < 3; i++) {
+      createLantern();
+      finalCelebration.lanternsSpawned++;
+      if (finalCelebration.lanternsSpawned >= finalCelebration.maxLanterns) break;
+    }
+  }
+
+  /* ---- DRAW LANTERNS ---- */
+  finalCelebration.lanterns.forEach(l => {
+    l.y -= l.vy * l.depth;
+    l.sway += l.swaySpeed;
+    l.x += Math.sin(l.sway) * 0.2;
+    l.alpha -= 0.0008;
+
+    // glow
+    ctx.globalAlpha = l.alpha * 0.6;
+    ctx.fillStyle = "rgba(255,180,80,0.4)";
+    ctx.beginPath();
+    ctx.arc(l.x - cameraX * l.depth, l.y, l.size * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // lantern body
+    ctx.globalAlpha = l.alpha;
+    ctx.fillStyle = "rgb(255,200,120)";
+    ctx.beginPath();
+    ctx.ellipse(
+      l.x - cameraX * l.depth,
+      l.y,
+      l.size,
+      l.size * 1.3,
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  });
+
+  ctx.globalAlpha = 1;
+
+  /* ---- TYPEWRITER TEXT (10s AFTER MUSIC) ---- */
+  if (finalTextStart !== null) {
+    const elapsed = finalCelebration.timer - finalTextStart;
+
+    if (elapsed >= FINAL_TEXT_DELAY && finalTextIndex < FINAL_MESSAGE.length) {
+      if (finalCelebration.timer % FINAL_TEXT_SPEED_FRAMES === 0) {
+        finalTextIndex++;
+      }
+    }
+
+    if (elapsed >= FINAL_TEXT_DELAY) {
+      const typed = FINAL_MESSAGE.slice(0, finalTextIndex);
+
+      const panelW = Math.min(920, canvas.width - 80);
+      const panelH = Math.min(320, canvas.height * 0.45);
+      const panelX = (canvas.width - panelW) / 2;
+      const panelY = 30;
+
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      ctx.fillRect(panelX, panelY, panelW, panelH);
+
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#fff";
+      ctx.font = "16px 'Courier New', 'Lucida Console', monospace";
+
+      let y = panelY + 30;
+      const lineHeight = 20;
+      const paragraphs = typed.split("\n");
+
+      paragraphs.forEach(p => {
+        if (p.trim() === "") {
+          y += lineHeight;
+          return;
+        }
+        y = wrapText(ctx, p, panelX + 20, y, panelW - 40, lineHeight) + lineHeight;
+      });
+
+      ctx.restore();
+
+      if (finalTextIndex >= FINAL_MESSAGE.length && !finalChoiceShown) {
+        showFinalChoice();
+      }
+    }
+  }
+
+  /* ---- STOP MUSIC AFTER 2 MIN ---- */
+  if (finalCelebration.timer > FINAL_DURATION && lanternMusicStarted) {
+    lanternMusic.pause();
+    lanternMusic.currentTime = 0;
+    lanternMusicStarted = false;
+  }
 }
 
 /* ================= DRAW FINAL SCENE ================= */
