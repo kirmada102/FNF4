@@ -1317,31 +1317,25 @@ function drawFinalCelebration() {
   cats.forEach(c => c.draw());
   girl.draw();
 
-  /* ---- BOY (STAYS ON RIGHT) ---- */
-  if (finalCelebration.phase === "boyWalk") {
+  /* ---- BOY ---- */
+  if (finalCelebration.phase === "boyWalk" || finalCelebration.phase === "rose") {
     boy.update();
+    boy.draw();
   }
-  boy.draw();
 
   /* ---- START LANTERNS AFTER ROSE ---- */
   if (finalCelebration.phase === "rose" && finalCelebration.timer > 120) {
     finalCelebration.phase = "lanterns";
-
     if (!lanternMusicStarted) {
       lanternMusic.play().catch(() => {});
       lanternMusicStarted = true;
     }
-
-    if (finalTextStart === null) {
-      finalTextStart = finalCelebration.timer;
-    }
   }
 
-  /* ---- SPAWN LANTERNS (STOP AFTER 2 MIN) ---- */
+  /* ---- SPAWN LANTERNS ---- */
   if (
     finalCelebration.phase === "lanterns" &&
-    finalCelebration.lanternsSpawned < finalCelebration.maxLanterns &&
-    finalCelebration.timer <= FINAL_DURATION
+    finalCelebration.lanternsSpawned < finalCelebration.maxLanterns
   ) {
     for (let i = 0; i < 3; i++) {
       createLantern();
@@ -1357,14 +1351,12 @@ function drawFinalCelebration() {
     l.x += Math.sin(l.sway) * 0.2;
     l.alpha -= 0.0008;
 
-    // glow
     ctx.globalAlpha = l.alpha * 0.6;
     ctx.fillStyle = "rgba(255,180,80,0.4)";
     ctx.beginPath();
     ctx.arc(l.x - cameraX * l.depth, l.y, l.size * 2.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // lantern body
     ctx.globalAlpha = l.alpha;
     ctx.fillStyle = "rgb(255,200,120)";
     ctx.beginPath();
@@ -1381,6 +1373,17 @@ function drawFinalCelebration() {
   });
 
   ctx.globalAlpha = 1;
+
+  if (finalCelebration.timer > FINAL_DURATION) {
+    finalCelebration.active = false;
+    if (lanternMusicStarted) {
+      lanternMusic.pause();
+      lanternMusic.currentTime = 0;
+      lanternMusicStarted = false;
+    }
+  }
+}
+
 
   /* ---- TYPEWRITER TEXT (10s AFTER MUSIC) ---- */
   if (finalTextStart !== null) {
