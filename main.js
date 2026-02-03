@@ -224,22 +224,97 @@ Cat.prototype.draw = function () {
 const cats = [new Cat(600), new Cat(900), new Cat(1200), new Cat(1500)];
 
 /* =============================================================================
-   HEARTS
+   ADVANCED HEART SYSTEM — ROTATING, SHINING, MARIO-STYLE
 ============================================================================= */
+
 let hearts = [];
 
+/* ================= SPAWN HEARTS ================= */
 function spawnHearts(count) {
   hearts = [];
   for (let i = 0; i < count; i++) {
-    hearts.push({ x: 500 + i * 300, y: GROUND_Y - 150 });
+    hearts.push({
+      x: 500 + i * 300,
+      y: GROUND_Y - 150,
+      baseY: GROUND_Y - 150,
+
+      // animation
+      rot: Math.random() * Math.PI * 2,
+      rotSpeed: 0.04 + Math.random() * 0.02,
+      floatT: Math.random() * Math.PI * 2,
+
+      // visual depth
+      scale: 1,
+      shine: Math.random() * Math.PI * 2,
+      glow: 0.6 + Math.random() * 0.4
+    });
   }
 }
 
-function drawHeart(x, y) {
-  ctx.fillStyle = "red";
+/* ================= DRAW HEART ================= */
+function drawHeart(h) {
+  h.rot += h.rotSpeed;
+  h.floatT += 0.03;
+  h.shine += 0.05;
+
+  // floating effect
+  const floatY = Math.sin(h.floatT) * 10;
+
+  // mario-style rotation illusion (width scaling)
+  const rotScale = Math.abs(Math.cos(h.rot));
+  const heartWidth = 16 * rotScale;
+  const heartHeight = 16;
+
+  const drawX = h.x - cameraX;
+  const drawY = h.baseY + floatY;
+
+  ctx.save();
+  ctx.translate(drawX, drawY);
+
+  /* ---- GLOW ---- */
+  ctx.globalAlpha = 0.25 * h.glow;
+  ctx.fillStyle = "rgba(255,80,120,1)";
   ctx.beginPath();
-  ctx.arc(x - cameraX, y, 8, 0, Math.PI * 2);
+  ctx.arc(0, 0, 26, 0, Math.PI * 2);
   ctx.fill();
+
+  /* ---- SHINE ---- */
+  ctx.globalAlpha = 0.4;
+  ctx.fillStyle = "rgba(255,255,255,0.8)";
+  ctx.beginPath();
+  ctx.arc(
+    -6 * rotScale,
+    -6,
+    4 + Math.sin(h.shine) * 2,
+    0,
+    Math.PI * 2
+  );
+  ctx.fill();
+
+  ctx.globalAlpha = 1;
+
+  /* ---- HEART SHAPE ---- */
+  ctx.fillStyle = "#ff2b6d";
+  ctx.beginPath();
+
+  // left curve
+  ctx.moveTo(0, 6);
+  ctx.bezierCurveTo(
+    -heartWidth, -heartHeight,
+    -heartWidth * 2, heartHeight / 2,
+    0, heartHeight * 2
+  );
+
+  // right curve
+  ctx.bezierCurveTo(
+    heartWidth * 2, heartHeight / 2,
+    heartWidth, -heartHeight,
+    0, 6
+  );
+
+  ctx.fill();
+
+  ctx.restore();
 }
 
 /* =============================================================================
