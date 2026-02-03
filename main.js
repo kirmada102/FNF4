@@ -14,13 +14,11 @@ canvas.height = window.innerHeight;
 const overlay = document.getElementById("overlay");
 const overlayContent = document.getElementById("overlayContent");
 
-
 // Lantern music
 const lanternMusic = new Audio("lanterns.mp3");
 lanternMusic.loop = true;
 lanternMusic.volume = 0.6;
 let lanternMusicStarted = false;
-
 
 /* =============================================================================
    WORLD CONSTANTS
@@ -147,9 +145,7 @@ function setupTouchControls() {
 
   document.body.style.touchAction = "none";
 }
-
 setupTouchControls();
-
 
 /* =============================================================================
    PLAYER — GIRL
@@ -227,7 +223,6 @@ const girl = {
   }
 };
 
-
 /* =============================================================================
    TREES — PIXEL CANOPY + BRANCHES + WINDY LEAVES
 ============================================================================= */
@@ -258,7 +253,6 @@ function drawWind() {
     ctx.lineTo(x + len + wind * 25, y);
     ctx.stroke();
   }
-
   ctx.restore();
 }
 
@@ -404,11 +398,9 @@ Tree.prototype.draw = function () {
 const trees = [];
 for (let i = 0; i < 30; i++) trees.push(new Tree(300 + i * 220));
 
-
 /* =============================================================================
    CLOUDS + BIRDS (LEVELS 1–2 ONLY)
 ============================================================================= */
-
 function Cloud(x, y, speed, scale) {
   this.x = x;
   this.y = y;
@@ -437,7 +429,6 @@ Cloud.prototype.draw = function () {
   ctx.translate(x, y);
   ctx.scale(this.scale, this.scale);
 
-  // pixel cloud style
   ctx.fillStyle = "#e8f2f2";
   ctx.fillRect(-32, -10, 64, 20);
   ctx.fillRect(-40, -6, 16, 12);
@@ -489,19 +480,13 @@ Bird.prototype.draw = function () {
   ctx.save();
   ctx.translate(x, y);
 
-  // body
   ctx.fillStyle = this.color;
   ctx.fillRect(-10, -4, 18, 8);
-
-  // head
   ctx.fillStyle = "#395c5e";
   ctx.fillRect(-2, -8, 6, 6);
-
-  // beak
   ctx.fillStyle = "#ff7f2a";
   ctx.fillRect(4, -6, 6, 3);
 
-  // wings (flap)
   const wing = Math.sin(this.flap) * 5;
   ctx.strokeStyle = "#2b3d3f";
   ctx.lineWidth = 3;
@@ -526,8 +511,6 @@ for (let i = 0; i < 4; i++) {
   );
 }
 
-
-
 /* =============================================================================
    CATS — MOODS + WAVY TAILS
 ============================================================================= */
@@ -551,11 +534,9 @@ Cat.prototype.draw = function () {
   ctx.save();
   ctx.translate(this.x - cameraX, this.y);
 
-  // body
   ctx.fillStyle = this.color;
   ctx.fillRect(-16, -18, 32, 12);
 
-  // stripes
   ctx.strokeStyle = "rgba(0,0,0,0.25)";
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -567,11 +548,9 @@ Cat.prototype.draw = function () {
   ctx.lineTo(10, -6);
   ctx.stroke();
 
-  // head
   ctx.fillStyle = this.color;
   ctx.fillRect(-10, -32, 20, 14);
 
-  // ears
   ctx.beginPath();
   ctx.moveTo(-10, -32);
   ctx.lineTo(-4, -40);
@@ -581,16 +560,13 @@ Cat.prototype.draw = function () {
   ctx.lineTo(0, -32);
   ctx.fill();
 
-  // eyes
   ctx.fillStyle = "#000";
   ctx.fillRect(-5, -28, 3, 3);
   ctx.fillRect(2, -28, 3, 3);
 
-  // nose
   ctx.fillStyle = "#ff6b6b";
   ctx.fillRect(-1, -24, 2, 2);
 
-  // mouth
   ctx.strokeStyle = "#000";
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -600,7 +576,6 @@ Cat.prototype.draw = function () {
   ctx.lineTo(2, -20);
   ctx.stroke();
 
-  // whiskers
   ctx.beginPath();
   ctx.moveTo(-8, -24);
   ctx.lineTo(-18, -26);
@@ -612,14 +587,12 @@ Cat.prototype.draw = function () {
   ctx.lineTo(18, -22);
   ctx.stroke();
 
-  // legs
   ctx.fillStyle = this.color;
   ctx.fillRect(-12, -6, 4, 6);
   ctx.fillRect(-2, -6, 4, 6);
   ctx.fillRect(6, -6, 4, 6);
   ctx.fillRect(12, -6, 4, 6);
 
-  // tail
   ctx.strokeStyle = this.color;
   ctx.lineWidth = 3;
   ctx.beginPath();
@@ -640,10 +613,8 @@ const cats = [new Cat(600), new Cat(900), new Cat(1200), new Cat(1500)];
 /* =============================================================================
    ADVANCED HEART SYSTEM — ROTATING, SHINING, MARIO-STYLE
 ============================================================================= */
-
 let hearts = [];
 
-/* ================= SPAWN HEARTS ================= */
 function spawnHearts(count) {
   hearts = [];
   for (let i = 0; i < count; i++) {
@@ -651,13 +622,9 @@ function spawnHearts(count) {
       x: 500 + i * 300,
       y: GROUND_Y - 150,
       baseY: GROUND_Y - 150,
-
-      // animation
       rot: Math.random() * Math.PI * 2,
       rotSpeed: 0.04 + Math.random() * 0.02,
       floatT: Math.random() * Math.PI * 2,
-
-      // visual depth
       scale: 1,
       shine: Math.random() * Math.PI * 2,
       glow: 0.6 + Math.random() * 0.4
@@ -665,16 +632,12 @@ function spawnHearts(count) {
   }
 }
 
-/* ================= DRAW HEART ================= */
 function drawHeart(h) {
   h.rot += h.rotSpeed;
   h.floatT += 0.03;
   h.shine += 0.05;
 
-  // floating effect
   const floatY = Math.sin(h.floatT) * 10;
-
-  // mario-style rotation illusion (width scaling)
   const rotScale = Math.abs(Math.cos(h.rot));
   const heartWidth = 16 * rotScale;
   const heartHeight = 16;
@@ -685,49 +648,25 @@ function drawHeart(h) {
   ctx.save();
   ctx.translate(drawX, drawY);
 
-  /* ---- GLOW ---- */
   ctx.globalAlpha = 0.25 * h.glow;
   ctx.fillStyle = "rgba(255,80,120,1)";
   ctx.beginPath();
   ctx.arc(0, 0, 26, 0, Math.PI * 2);
   ctx.fill();
 
-  /* ---- SHINE ---- */
   ctx.globalAlpha = 0.4;
   ctx.fillStyle = "rgba(255,255,255,0.8)";
   ctx.beginPath();
-  ctx.arc(
-    -6 * rotScale,
-    -6,
-    4 + Math.sin(h.shine) * 2,
-    0,
-    Math.PI * 2
-  );
+  ctx.arc(-6 * rotScale, -6, 4 + Math.sin(h.shine) * 2, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.globalAlpha = 1;
-
-  /* ---- HEART SHAPE ---- */
   ctx.fillStyle = "#ff2b6d";
   ctx.beginPath();
-
-  // left curve
   ctx.moveTo(0, 6);
-  ctx.bezierCurveTo(
-    -heartWidth, -heartHeight,
-    -heartWidth * 2, heartHeight / 2,
-    0, heartHeight * 2
-  );
-
-  // right curve
-  ctx.bezierCurveTo(
-    heartWidth * 2, heartHeight / 2,
-    heartWidth, -heartHeight,
-    0, 6
-  );
-
+  ctx.bezierCurveTo(-heartWidth, -heartHeight, -heartWidth * 2, heartHeight / 2, 0, heartHeight * 2);
+  ctx.bezierCurveTo(heartWidth * 2, heartHeight / 2, heartWidth, -heartHeight, 0, 6);
   ctx.fill();
-
   ctx.restore();
 }
 
@@ -738,17 +677,7 @@ let celebrationActive = false;
 let celebrationTimer = 0;
 let celebrationText = "";
 let celebrationCallback = null;
-let celebrationMode = "normal"; // "normal" | "hearts" | "cats"
-
-function startCelebration(text, cb) {
-  celebrationActive = true;
-  celebrationTimer = 180;
-  celebrationText = text;
-  celebrationCallback = cb;
-  gamePaused = true;
-}
-
-/* ====== NEW CELEBRATION PARTICLES ====== */
+let celebrationMode = "normal";
 let celebrationParticles = [];
 
 function startHeartsCelebration(cb) {
@@ -847,7 +776,6 @@ function drawCelebration() {
     gamePaused = false;
     celebrationMode = "normal";
 
-    // RESET PLAYER PHYSICS
     girl.vy = 0;
     girl.y = GROUND_Y;
     girl.onGround = true;
@@ -857,7 +785,7 @@ function drawCelebration() {
 }
 
 /* =============================================================================
-   VINTAGE QUESTION SCENE (GIRL BEATS BOY)
+   VINTAGE QUESTION SCENE
 ============================================================================= */
 let questionActive = false;
 let questionAnimT = 0;
@@ -865,18 +793,15 @@ let questionAnimT = 0;
 function drawQuestionScene() {
   questionAnimT += 0.1;
 
-  // background
   const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
   grad.addColorStop(0, "#c79d59");
   grad.addColorStop(1, "#7a5a2b");
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // ground
   ctx.fillStyle = "#3b2f2f";
   ctx.fillRect(0, GROUND_Y, canvas.width, GROUND_HEIGHT);
 
-  // girl (left) punching
   const girlX = canvas.width * 0.4;
   const girlY = GROUND_Y;
   const punch = Math.sin(questionAnimT) * 6;
@@ -894,7 +819,6 @@ function drawQuestionScene() {
   ctx.stroke();
   ctx.restore();
 
-  // boy (right) getting hit
   const boyX = canvas.width * 0.6;
   const boyY = GROUND_Y;
   const recoil = Math.sin(questionAnimT + 1.2) * 5;
@@ -935,9 +859,7 @@ function showLevel1Question() {
     const val = document.getElementById("loveAnswer").value.trim().toLowerCase();
     tries++;
 
-    const normalized = val
-      .replace(/,/g, "")
-      .replace(/\s+/g, " ");
+    const normalized = val.replace(/,/g, "").replace(/\s+/g, " ");
 
     const correct = [
       "10th march 2024",
@@ -956,7 +878,7 @@ function showLevel1Question() {
         level = 2;
         heartsCollected = 0;
         spawnHearts(12);
-        levelTimerFrames = 0; // add here if you use the timer
+        levelTimerFrames = 0;
       });
       return;
     }
@@ -1028,7 +950,7 @@ function showLevel2Question() {
         level = 3;
         heartsCollected = 0;
         spawnHearts(13);
-        levelTimerFrames = 0; // add here if you use the timer
+        levelTimerFrames = 0;
       });
     }
   };
@@ -1039,10 +961,9 @@ function showLevel2Question() {
 /* =============================================================================
    FINAL CELEBRATION — CINEMATIC NIGHT + LANTERNS
 ============================================================================= */
-
-const FINAL_DURATION = 120 * 60; // 2 minutes at 60fps
-const FINAL_TEXT_DELAY = 10 * 60; // 10 seconds after music starts
-const FINAL_TEXT_SPEED_FRAMES = 3; // typewriter speed (1 char every 3 frames)
+const FINAL_DURATION = 120 * 60;
+const FINAL_TEXT_DELAY = 10 * 60;
+const FINAL_TEXT_SPEED_FRAMES = 3;
 
 const FINAL_MESSAGE =
   "2 years with you my love and I think the reason every moment of our journey has been sp beautiful is because you were a part of every scenery I wish to live the whole eternity with you and you and you till the galaxies collide the world collapse and everything comes to dust. Happy valentines day my love. I hope you love my small gift i have working on months for.\n\nI love you Tanu. I always will.\n\n- yours geet.";
@@ -1054,7 +975,7 @@ let finalCelebration = {
   lanterns: [],
   lanternsSpawned: 0,
   maxLanterns: 220,
-  phase: "boyWalk" // boyWalk → rose → lanterns
+  phase: "boyWalk"
 };
 
 let finalTextStart = null;
@@ -1084,7 +1005,6 @@ const boy = {
     ctx.save();
     ctx.translate(this.x - cameraX, this.y);
 
-    // legs + feet
     ctx.fillStyle = "#111";
     ctx.fillRect(-6, -8, 4, 8);
     ctx.fillRect(2, -8, 4, 8);
@@ -1092,17 +1012,14 @@ const boy = {
     ctx.fillRect(-8, -2, 8, 4);
     ctx.fillRect(0, -2, 8, 4);
 
-    // body (tshirt)
     ctx.fillStyle = "#1b1b1b";
     ctx.fillRect(-10, -32, 20, 22);
 
-    // shirt text
     ctx.fillStyle = "#ff3b7a";
     ctx.font = "bold 6px Arial";
     ctx.textAlign = "center";
     ctx.fillText("KIRMADA", 0, -18);
 
-    // arms
     ctx.strokeStyle = "#1b1b1b";
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -1112,7 +1029,6 @@ const boy = {
     ctx.lineTo(18, -20);
     ctx.stroke();
 
-    // rose in hand
     ctx.fillStyle = "red";
     ctx.beginPath();
     ctx.arc(20, -22, 4, 0, Math.PI * 2);
@@ -1124,23 +1040,18 @@ const boy = {
     ctx.lineTo(24, -12);
     ctx.stroke();
 
-    // head
     ctx.fillStyle = "#ffddb3";
     ctx.fillRect(-8, -48, 16, 16);
 
-    // hair
     ctx.fillStyle = "#2b1b0a";
     ctx.fillRect(-8, -52, 16, 6);
 
-    // eyes
     ctx.fillStyle = "#000";
     ctx.fillRect(-4, -44, 2, 2);
     ctx.fillRect(2, -44, 2, 2);
 
-    // nose
     ctx.fillRect(-1, -41, 2, 2);
 
-    // mouth
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -1174,7 +1085,6 @@ function startFinalCelebration() {
   boy.x = girl.x + 450;
   boy.stopped = false;
 
-  // stars
   finalCelebration.stars = Array.from({ length: 180 }, () => ({
     x: Math.random() * WORLD_WIDTH,
     y: Math.random() * canvas.height * 0.6,
@@ -1194,7 +1104,7 @@ function createLantern() {
     size: 6 + Math.random() * 6,
     glow: 0.6 + Math.random() * 0.4,
     alpha: 1,
-    depth: 0.6 + Math.random() * 0.6 // parallax
+    depth: 0.6 + Math.random() * 0.6
   });
 }
 
@@ -1289,7 +1199,6 @@ function resetGame() {
 function drawFinalCelebration() {
   finalCelebration.timer++;
 
-  /* ---- NIGHT SKY GRADIENT ---- */
   const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
   g.addColorStop(0, "#020111");
   g.addColorStop(0.5, "#050b2e");
@@ -1297,7 +1206,6 @@ function drawFinalCelebration() {
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  /* ---- STARS ---- */
   ctx.fillStyle = "#fff";
   finalCelebration.stars.forEach(s => {
     s.tw += 0.02;
@@ -1309,7 +1217,6 @@ function drawFinalCelebration() {
   });
   ctx.globalAlpha = 1;
 
-  /* ---- GROUND ---- */
   ctx.fillStyle = "#142b14";
   ctx.fillRect(-cameraX, GROUND_Y, WORLD_WIDTH, GROUND_HEIGHT);
 
@@ -1317,13 +1224,11 @@ function drawFinalCelebration() {
   cats.forEach(c => c.draw());
   girl.draw();
 
-  /* ---- BOY (STAYS ON RIGHT) ---- */
   if (finalCelebration.phase === "boyWalk") {
     boy.update();
   }
   boy.draw();
 
-  /* ---- START LANTERNS AFTER ROSE ---- */
   if (finalCelebration.phase === "rose" && finalCelebration.timer > 120) {
     finalCelebration.phase = "lanterns";
 
@@ -1337,7 +1242,6 @@ function drawFinalCelebration() {
     }
   }
 
-  /* ---- SPAWN LANTERNS ---- */
   if (
     finalCelebration.phase === "lanterns" &&
     finalCelebration.lanternsSpawned < finalCelebration.maxLanterns &&
@@ -1350,7 +1254,6 @@ function drawFinalCelebration() {
     }
   }
 
-  /* ---- DRAW LANTERNS ---- */
   finalCelebration.lanterns.forEach(l => {
     l.y -= l.vy * l.depth;
     l.sway += l.swaySpeed;
@@ -1380,7 +1283,6 @@ function drawFinalCelebration() {
 
   ctx.globalAlpha = 1;
 
-  /* ---- TYPEWRITER TEXT (10s AFTER MUSIC) ---- */
   if (finalTextStart !== null) {
     const elapsed = finalCelebration.timer - finalTextStart;
 
@@ -1427,7 +1329,6 @@ function drawFinalCelebration() {
     }
   }
 
-  /* ---- STOP MUSIC AFTER 2 MIN ---- */
   if (finalCelebration.timer > FINAL_DURATION && lanternMusicStarted) {
     lanternMusic.pause();
     lanternMusic.currentTime = 0;
@@ -1435,74 +1336,6 @@ function drawFinalCelebration() {
   }
 }
 
-
-
-  /* ---- TYPEWRITER TEXT (10s AFTER MUSIC) ---- */
-  if (finalTextStart !== null) {
-    const elapsed = finalCelebration.timer - finalTextStart;
-
-    if (elapsed >= FINAL_TEXT_DELAY && finalTextIndex < FINAL_MESSAGE.length) {
-      if (finalCelebration.timer % FINAL_TEXT_SPEED_FRAMES === 0) {
-        finalTextIndex++;
-      }
-    }
-
-    if (elapsed >= FINAL_TEXT_DELAY) {
-      const typed = FINAL_MESSAGE.slice(0, finalTextIndex);
-
-      const panelW = Math.min(920, canvas.width - 80);
-      const panelH = Math.min(320, canvas.height * 0.45);
-      const panelX = (canvas.width - panelW) / 2;
-      const panelY = 30;
-
-      ctx.save();
-      ctx.globalAlpha = 0.85;
-      ctx.fillStyle = "rgba(0,0,0,0.5)";
-      ctx.fillRect(panelX, panelY, panelW, panelH);
-
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = "#fff";
-      ctx.font = "16px 'Courier New', 'Lucida Console', monospace";
-
-      let y = panelY + 30;
-      const lineHeight = 20;
-      const paragraphs = typed.split("\n");
-
-      paragraphs.forEach(p => {
-        if (p.trim() === "") {
-          y += lineHeight;
-          return;
-        }
-        y = wrapText(ctx, p, panelX + 20, y, panelW - 40, lineHeight) + lineHeight;
-      });
-
-      ctx.restore();
-
-      if (finalTextIndex >= FINAL_MESSAGE.length && !finalChoiceShown) {
-        showFinalChoice();
-      }
-    }
-  }
-
-  /* ---- STOP MUSIC AFTER 2 MIN ---- */
-  if (finalCelebration.timer > FINAL_DURATION && lanternMusicStarted) {
-    lanternMusic.pause();
-    lanternMusic.currentTime = 0;
-    lanternMusicStarted = false;
-  }
-}
-
-
-  /* ---- END AFTER ~20s ---- */
-    if (finalCelebration.timer > FINAL_DURATION) {
-    finalCelebration.active = false;
-    if (lanternMusicStarted) {
-      lanternMusic.pause();
-      lanternMusic.currentTime = 0;
-      lanternMusicStarted = false;
-    }
-  }
-}
 /* =============================================================================
    Intro letter 
 ============================================================================= */
@@ -1510,7 +1343,6 @@ function showIntroLetter() {
   gamePaused = true;
   overlay.style.display = "flex";
 
-  // make overlay content look like a parchment scroll
   overlayContent.className = "vintage";
   overlayContent.style.background = "transparent";
   overlayContent.style.boxShadow = "none";
@@ -1577,24 +1409,22 @@ function showIntroLetter() {
   const msg = document.getElementById("introMsg");
 
   document.getElementById("introAccept").onclick = () => {
-  const allChecked = checks.every(c => c.checked);
-  if (!allChecked) {
-    msg.textContent = "Please tick all the boxes to continue.";
-    return;
-  }
+    const allChecked = checks.every(c => c.checked);
+    if (!allChecked) {
+      msg.textContent = "Please tick all the boxes to continue.";
+      return;
+    }
 
-  // reset overlay styles so other popups look normal
-  overlayContent.className = "";
-  overlayContent.style.background = "";
-  overlayContent.style.boxShadow = "";
-  overlayContent.style.padding = "";
-  overlayContent.style.position = "";
+    overlayContent.className = "";
+    overlayContent.style.background = "";
+    overlayContent.style.boxShadow = "";
+    overlayContent.style.padding = "";
+    overlayContent.style.position = "";
 
-  overlay.style.display = "none";
-  gamePaused = false;
-  gameStarted = true;
-};
-
+    overlay.style.display = "none";
+    gamePaused = false;
+    gameStarted = true;
+  };
 
   document.getElementById("introReject").onclick = () => {
     msg.textContent = "You must accept to play.";
@@ -1606,7 +1436,6 @@ function showIntroLetter() {
 ============================================================================= */
 function evasiveYes(cb) {
   document.getElementById("yes").onclick = () => {
-    // unlock audio for later playback
     lanternMusic.play().then(() => {
       lanternMusic.pause();
       lanternMusic.currentTime = 0;
@@ -1642,7 +1471,7 @@ function loop() {
     requestAnimationFrame(loop);
     return;
   }
- 
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   updateWind();
@@ -1672,8 +1501,8 @@ function loop() {
 
   drawWind();
   if (level <= 2) {
-   clouds.forEach(c => { c.update(); c.draw(); });
-   birds.forEach(b => { b.update(); b.draw(); });
+    clouds.forEach(c => { c.update(); c.draw(); });
+    birds.forEach(b => { b.update(); b.draw(); });
   }
 
   trees.forEach(t => { t.update(); t.draw(); });
@@ -1711,7 +1540,6 @@ function loop() {
 
   requestAnimationFrame(loop);
 }
-
 
 /* =============================================================================
    START GAME
