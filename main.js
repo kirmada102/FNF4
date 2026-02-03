@@ -42,6 +42,40 @@ let level1CelebrationDone = false;
 let level2CelebrationDone = false;
 let level2QuestionShown = false;
 let finalQuestionShown = false;
+let levelTimerFrames = 0;
+
+function getLevelTarget() {
+  if (level === 1) return 10;
+  if (level === 2) return 12;
+  return 13;
+}
+
+function formatTime(frames) {
+  const totalSeconds = Math.floor(frames / 60);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+function drawHUD() {
+  const time = formatTime(levelTimerFrames);
+  const target = getLevelTarget();
+
+  ctx.save();
+  ctx.globalAlpha = 0.85;
+  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  ctx.fillRect(16, 16, 210, 72);
+
+  ctx.fillStyle = "#fff";
+  ctx.font = "bold 14px Arial";
+  ctx.textBaseline = "top";
+  ctx.fillText(`Level ${level}`, 26, 26);
+  ctx.font = "13px Arial";
+  ctx.fillText(`Time: ${time}`, 26, 44);
+  ctx.fillText(`Hearts: ${heartsCollected}/${target}`, 26, 60);
+  ctx.restore();
+}
+
 
 /* =============================================================================
    INPUT
@@ -126,66 +160,183 @@ const girl = {
   }
 };
 
+
 /* =============================================================================
-   TREES — WAVY + FALLING LEAVES
+   TREES — PIXEL CANOPY + BRANCHES + WINDY LEAVES
 ============================================================================= */
+let wind = 0;
+let windTarget = 0;
+let windTick = 0;
+
+function updateWind() {
+  windTick += 0.02;
+  if (Math.random() < 0.01) {
+    windTarget = (Math.random() * 2 - 1) * 1.6;
+  }
+  wind += (windTarget - wind) * 0.02;
+}
+
+function drawWind() {
+  ctx.save();
+  ctx.globalAlpha = 0.15;
+  ctx.strokeStyle = "rgba(255,255,255,0.6)";
+  ctx.lineWidth = 2;
+
+  for (let i = 0; i < 7; i++) {
+    const y = (i * 90 + windTick * 60) % GROUND_Y;
+    const x = (i * 160 + windTick * 80) % canvas.width;
+    const len = 60 + i * 10;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + len + wind * 25, y);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
 function Tree(x) {
   this.x = x;
-  this.height = 80 + Math.random() * 50;
-  this.width = 16 + Math.random() * 6;
+  this.height = 110 + Math.random() * 70;
+  this.trunkWidth = 22 + Math.random() * 10;
   this.sway = Math.random() * Math.PI * 2;
-  this.swaySpeed = 0.004 + Math.random() * 0.006;
-  this.swayAmount = 2 + Math.random() * 4;
-  this.leafRadius = 40 + Math.random() * 20;
+  this.swaySpeed = 0.002 + Math.random() * 0.003;
+  this.swayAmount = 2 + Math.random() * 3;
+
+  this.canopyBlocks = [];
+  this.branches = [];
+  this.vines = [];
   this.leaves = [];
+
+  const canopyRadius = 60 + Math.random() * 20;
+  const canopyY = -this.height + 10;
+  const palette = ["#0f6a2c", "#1a7f36", "#7ebf3b", "#9bd24b"];
+
+  const blockCount = 18 + Math.floor(Math.random() * 6);
+  for (let i = 0; i < blockCount; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const r = Math.random() * canopyRadius;
+    let size = 16 + Math.random() * 18;
+    size = Math.round(size / 4) * 4;
+
+    this.canopyBlocks.push({
+      x: Math.round(Math.cos(angle) * r / 4) * 4,
+      y: Math.round((Math.sin(angle) * r * 0.6 + canopyY) / 4) * 4,
+      w: size,
+      h: size,
+      color: palette[Math.floor(Math.random() * palette.length)]
+    });
+  }
+
+  for (let i = 0; i < 4; i++) {
+    this.branches.push({
+      y: -this.height + 30 + Math.random() * 50,
+      len: 18 + Math.random() * 28,
+      dir: Math.random() < 0.5 ? -1 : 1
+    });
+  }
+
+  for (let i = 0; i < 6; i++) {
+    this.vines.push({
+      x: -40 + Math.random() * 80,
+      y: canopyY + 20 + Math.random() * 40,
+      len: 25 + Math.random() * 35,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
 }
 
 Tree.prototype.update = function () {
-  this.sway += this.swaySpeed;
+  this.sway += this.swaySpeed + Math.abs(wind) * 0.001;
 
-  if (Math.random() < 0.03) {
+  if (Math.random() < 0.04) {
+    const c = this.canopyBlocks[Math.floor(Math.random() * this.canopyBlocks.length)];
     this.leaves.push({
-      x: this.x + Math.random() * 40 - 20,
-      y: GROUND_Y - this.height,
-      vy: 0.6,
-      alpha: 1
+      x: this.x + c.x + (Math.random() * 16 - 8),
+      y: GROUND_Y + c.y + (Math.random() * 10 - 5),
+      vx: wind * 0.4 + (Math.random() * 0.6 - 0.3),
+      vy: 0.4 + Math.random() * 0.5,
+      rot: Math.random() * Math.PI * 2,
+      rotSpeed: 0.05 + Math.random() * 0.05,
+      size: 4 + Math.random() * 4,
+      swing: Math.random() * Math.PI * 2,
+      alpha: 1,
+      color: Math.random() < 0.5 ? "#6fc04b" : "#5aa83b"
     });
   }
 
   this.leaves.forEach(l => {
+    l.swing += 0.08;
+    l.vx += wind * 0.01;
+    l.x += l.vx + Math.sin(l.swing) * 0.2;
     l.y += l.vy;
-    l.alpha -= 0.01;
+    l.vy += 0.01;
+    l.rot += l.rotSpeed;
+    l.alpha -= 0.006;
   });
 
-  this.leaves = this.leaves.filter(l => l.alpha > 0);
+  this.leaves = this.leaves.filter(l => l.alpha > 0 && l.y < GROUND_Y + 40);
 };
 
 Tree.prototype.draw = function () {
-  const swayOffset = Math.sin(this.sway) * this.swayAmount;
+  const swayOffset = Math.sin(this.sway) * this.swayAmount + wind * 2;
+  const baseX = this.x - cameraX + swayOffset;
 
   ctx.save();
-  ctx.translate(this.x - cameraX + swayOffset, GROUND_Y);
+  ctx.translate(baseX, GROUND_Y);
 
-  ctx.fillStyle = "#5b3a1e";
-  ctx.fillRect(-this.width / 2, -this.height, this.width, this.height);
+  // trunk
+  ctx.fillStyle = "#6a3f1b";
+  ctx.fillRect(-this.trunkWidth / 2, -this.height, this.trunkWidth, this.height);
+  ctx.fillStyle = "#8a5a2b";
+  ctx.fillRect(-this.trunkWidth / 2 + 2, -this.height, this.trunkWidth / 3, this.height);
+  ctx.fillStyle = "#4a2a12";
+  ctx.fillRect(this.trunkWidth / 2 - 4, -this.height, 4, this.height);
 
-  ctx.fillStyle = "#1f8f3a";
-  ctx.beginPath();
-  ctx.arc(0, -this.height, this.leafRadius, 0, Math.PI * 2);
-  ctx.fill();
+  // branches
+  this.branches.forEach(b => {
+    ctx.fillStyle = "#5a3216";
+    ctx.fillRect(0, b.y, b.len * b.dir, 6);
+    ctx.fillRect(b.len * b.dir - 2 * b.dir, b.y - 4, 4 * b.dir, 4);
+  });
+
+  // canopy blocks
+  this.canopyBlocks.forEach(c => {
+    ctx.fillStyle = c.color;
+    ctx.fillRect(c.x - c.w / 2, c.y - c.h / 2, c.w, c.h);
+  });
+
+  // under-canopy shadow
+  ctx.fillStyle = "rgba(0,0,0,0.08)";
+  ctx.fillRect(-60, -this.height + 40, 120, 24);
+
+  // vines
+  ctx.strokeStyle = "#0e5e28";
+  ctx.lineWidth = 3;
+  this.vines.forEach(v => {
+    const sway = Math.sin(this.sway + v.phase + windTick * 1.5) * (2 + Math.abs(wind) * 3);
+    ctx.beginPath();
+    ctx.moveTo(v.x, v.y);
+    ctx.lineTo(v.x + sway, v.y + v.len);
+    ctx.stroke();
+  });
 
   ctx.restore();
 
+  // falling leaves
   this.leaves.forEach(l => {
-    ctx.fillStyle = `rgba(40,160,80,${l.alpha})`;
-    ctx.beginPath();
-    ctx.arc(l.x - cameraX, l.y, 4, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.save();
+    ctx.translate(l.x - cameraX, l.y);
+    ctx.rotate(l.rot);
+    ctx.fillStyle = `rgba(70,160,60,${l.alpha})`;
+    ctx.fillRect(-l.size / 2, -l.size / 2, l.size, l.size);
+    ctx.restore();
   });
 };
 
 const trees = [];
 for (let i = 0; i < 30; i++) trees.push(new Tree(300 + i * 220));
+
 
 /* =============================================================================
    CATS — MOODS + WAVY TAILS
@@ -615,6 +766,7 @@ function showLevel1Question() {
         level = 2;
         heartsCollected = 0;
         spawnHearts(12);
+        levelTimerFrames = 0; // add here if you use the timer
       });
       return;
     }
@@ -686,6 +838,7 @@ function showLevel2Question() {
         level = 3;
         heartsCollected = 0;
         spawnHearts(13);
+        levelTimerFrames = 0; // add here if you use the timer
       });
     }
   };
@@ -697,7 +850,7 @@ function showLevel2Question() {
    FINAL CELEBRATION — CINEMATIC NIGHT + LANTERNS
 ============================================================================= */
 
-const FINAL_DURATION = 20 * 60; // ~20 seconds at 60fps
+const FINAL_DURATION = 120 * 60; // ~120 seconds at 60fps
 
 let finalCelebration = {
   active: false,
@@ -971,6 +1124,8 @@ function showFinalQuestion() {
 function loop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  updateWind();
+
   if (questionActive) {
     drawQuestionScene();
     requestAnimationFrame(loop);
@@ -989,8 +1144,12 @@ function loop() {
     return;
   }
 
+  levelTimerFrames++;
+
   ctx.fillStyle = "#4caf50";
   ctx.fillRect(-cameraX, GROUND_Y, WORLD_WIDTH, GROUND_HEIGHT);
+
+  drawWind();
 
   trees.forEach(t => { t.update(); t.draw(); });
   cats.forEach(c => { c.update(); c.draw(); });
@@ -998,21 +1157,20 @@ function loop() {
   girl.update();
   girl.draw();
 
-    hearts.forEach((h, i) => {
+  hearts.forEach((h, i) => {
     drawHeart(h);
 
-    // match the floating heart position used in drawHeart
     const heartY = h.baseY + Math.sin(h.floatT) * 10;
-
     const dx = Math.abs(h.x - girl.x);
     const dy = Math.abs(heartY - girl.y);
 
-    // only collect if touching (both X and Y) AND girl is not on ground
     if (dx < 25 && dy < 35 && !girl.onGround) {
       hearts.splice(i, 1);
       heartsCollected++;
     }
   });
+
+  drawHUD();
 
   if (level === 1 && heartsCollected === 10 && !level1CelebrationDone) {
     level1CelebrationDone = true;
@@ -1028,6 +1186,7 @@ function loop() {
 
   requestAnimationFrame(loop);
 }
+
 
 /* =============================================================================
    START GAME
